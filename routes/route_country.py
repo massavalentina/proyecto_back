@@ -14,5 +14,5 @@ router_country = SQLAlchemyCRUDRouter(
     create_schema=CountryCreate,
     db_model= CountryModel,
     db= get_db,
-    prefix='company'
+    prefix='country'
 )

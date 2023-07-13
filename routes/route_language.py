@@ -14,5 +14,5 @@ router_language = SQLAlchemyCRUDRouter(
     create_schema=LanguageCreate,
     db_model= LanguageModel,
     db= get_db,
-    prefix='company'
+    prefix='language'
 )
