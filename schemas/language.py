@@ -14,5 +14,5 @@ class Language(LanguageCreate):
     id: int
 
     class Config:
-        orm_mode: True
+        orm_mode = True
 
