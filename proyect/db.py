@@ -10,12 +10,12 @@ session_local = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 Base = declarative_base()
 
 def create_tables():
-    Base.metadata.create_all(bind= engine)
+  Base.metadata.create_all(bind= engine)
 
 def get_db() :
-    db = session_local()
-    try: 
-        yield db
-        db.commit()
-    finally:
-        db.close()
+  db = session_local()
+  try: 
+    yield db
+    db.commit()
+  finally:
+    db.close()
