@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 
 class CountryCreate(BaseModel):
-    name: str = Field(gt=2, lt=50)
+    name: str = Field(min_length=2, max_length=50)
     
 
 class Country(CountryCreate):

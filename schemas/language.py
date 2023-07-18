@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 
 class LanguageCreate(BaseModel):
-    name: str = Field(gt=2, lt=50 )
+    name: str = Field(min_length=2, max_length=50)
     
 
 class Language(LanguageCreate):
