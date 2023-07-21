@@ -9,10 +9,10 @@ from sqlalchemy.orm import relationship
 
 
 class CompanyModel(Base):
-    __tablename__ = 'Companies'
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100))
-    web_direction = Column(String(100))
+  __tablename__ = 'Companies'
+  id = Column(Integer, primary_key=True, index=True)
+  name = Column(String(100))
+  web_direction = Column(String(100))
     
 # id
 # nombre min 2 max 50

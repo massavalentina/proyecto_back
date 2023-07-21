@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.responses import Response
 from routes.route_company import router_company
 from routes.route_country import router_country
 from routes.route_language import router_language
@@ -7,17 +8,20 @@ from fastapi.responses import JSONResponse
 from fastapi_jwt_auth.exceptions import AuthJWTException
 from fastapi_jwt_auth import AuthJWT
 from schemas.settings import Settings
-
+# from routes.protected import protected_router #! ignorar
 from db import create_tables
 
 app = FastAPI()
 
+
+# app.include_router(protected_router) #! ignorar
 app.include_router(router_auth)
 app.include_router(router_company)
 app.include_router(router_language)
 app.include_router(router_country)
 
 create_tables()
+
 
 @AuthJWT.load_config
 def get_config():

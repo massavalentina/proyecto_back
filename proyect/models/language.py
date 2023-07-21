@@ -8,9 +8,9 @@ from sqlalchemy.orm import relationship
 ###########################################################################################*
 
 class LanguageModel(Base):
-    __tablename__ = 'Language'
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100))
+  __tablename__ = 'Language'
+  id = Column(Integer, primary_key=True, index=True)
+  name = Column(String(100))
 
     
 

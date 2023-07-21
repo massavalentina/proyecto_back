@@ -5,7 +5,7 @@ class UserLogin(BaseModel):
   usr_password: str = Field(min_length=6, max_length=20)
   
 class UserCreate(UserLogin):
-  usr_name: str = Field(regex=r"^\w+(?:\s\w+)*$", min_length=3, max_length=50)
+  usr_name: str = Field(regex=r"^(?!.*\s)[a-zA-Z0-9_-]+(?<!-)$", min_length=3, max_length=50)
   
 class User(UserCreate):
   usr_id: int

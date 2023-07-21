@@ -7,12 +7,12 @@ from pydantic import BaseModel, Field
 
 
 class LanguageCreate(BaseModel):
-    name: str = Field(min_length=2, max_length=50)
+  name: str = Field(min_length=2, max_length=50)
     
 
 class Language(LanguageCreate):
-    id: int
+  id: int
 
-    class Config:
-        orm_mode: True
+  class Config:
+    orm_mode = True
 

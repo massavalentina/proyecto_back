@@ -10,9 +10,9 @@ from models.country import CountryModel
 
 
 router_country = SQLAlchemyCRUDRouter(
-    schema=Country,
-    create_schema=CountryCreate,
-    db_model= CountryModel,
-    db= get_db,
-    prefix='country'
+  schema=Country,
+  create_schema=CountryCreate,
+  db_model= CountryModel,
+  db= get_db,
+  prefix='country'
 )

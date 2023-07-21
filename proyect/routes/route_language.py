@@ -10,9 +10,9 @@ from models.language import LanguageModel
 
 
 router_language = SQLAlchemyCRUDRouter(
-    schema=Language,
-    create_schema=LanguageCreate,
-    db_model= LanguageModel,
-    db= get_db,
-    prefix='language'
+  schema=Language,
+  create_schema=LanguageCreate,
+  db_model= LanguageModel,
+  db= get_db,
+  prefix='language'
 )

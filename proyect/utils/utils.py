@@ -1,31 +1,17 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi_jwt_auth import AuthJWT
 from fastapi_jwt_auth.exceptions import AuthJWTException
 from fastapi.responses import Response
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema
 from passlib.context import CryptContext
+from sqlalchemy import update
+from sqlalchemy.orm import Session
+from jose import JWTError, jwt
+from config.enviroments import ALGORITHM, SECRET_KEY
+from models.user import UserModel
+from schemas.user import UserCreate, UserLogin
+from datetime import datetime, timedelta
 
-
-#################### refresh_token_middleware ####################
-#     middleware para analizar el access_token                   #
-##################################################################
-async def refresh_token_middleware(request, call_next):
-  try:
-    AuthJWT.jwt_required()
-    return await call_next(request)
-  except AuthJWTException:
-    try:
-      AuthJWT.jwt_refresh_token_required()
-      current_user = AuthJWT.get_jwt_subject()
-      new_access_token = AuthJWT.create_access_token(subject=current_user)
-      response = await call_next(request)
-      
-      response.set_cookie(key="access_token", value=new_access_token)
-      
-      return await call_next(request)
-    except AuthJWTException:
-      return Response("Unauthorized", status_code=401)
-##################################################################
 
 
 #################### HASHING PASSWORD WITH BCRYPT ####################
@@ -41,9 +27,9 @@ def verify_password(plain_password, hash_password):
 ######################################################################
     
     
-#################### send_email ######################
-#     configuracion para envio de email              #
-###################################################### 
+#*################### send_email ######################
+# *    configuracion para envio de email              #
+#*##################################################### 
 async def send_email(token: str, usr_email: str):
   
   conf = ConnectionConfig(
@@ -76,5 +62,99 @@ async def send_email(token: str, usr_email: str):
   )
   fm = FastMail(conf)
   await fm.send_message(message)
-######################################################
+#*#####################################################
+  
     
+''' CREATE USER '''
+async def create_user(db: Session, user: UserCreate):
+  usr_email = db.query(UserModel).filter(UserModel.usr_email == user.usr_email).first() 
+
+  if usr_email:
+    raise HTTPException(
+      status_code=status.HTTP_400_BAD_REQUEST, 
+      detail="Email registrado"
+    )
+
+  hashed_password = get_password_hash(user.usr_password)
+
+  user.usr_password = hashed_password
+  db_user = UserModel(**user.dict())
+  db.add(db_user)
+  db.commit()
+  db.refresh(db_user)
+  
+  token = create_verify_token( 
+    db_user.usr_id, 
+    timedelta(minutes=25)
+  )
+  
+  await send_email(token, user.usr_email)
+  return db_user
+''' END CREATE USER'''
+    
+'''VERIFY EMAIL'''
+def verify_usr_email(token: str, db: Session):
+  try:
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+
+    usr_id = payload['id']
+    if not usr_id:
+      raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Usuario no autorizado gcu",
+      )
+      
+    user_db = db.query(UserModel).filter_by(usr_id = usr_id).first()
+    
+    if not user_db:
+      raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Usuario no encontrado",
+      )
+    
+    user_update = ( update(UserModel).where(UserModel.usr_id == usr_id).values(usr_enabled=True) )
+    db.execute(user_update)
+    db.commit()
+    
+    
+  except JWTError:
+    raise HTTPException(
+      status_code=status.HTTP_401_UNAUTHORIZED,
+      detail="Token expirado",
+    )
+''' END VERIFY EMAIL'''       
+
+""" CREATE VERIFY TOKEN """
+def create_verify_token( usr_id: int, expires_delta: timedelta):
+  encode = {"id": usr_id}
+  expires_delta = datetime.utcnow() + expires_delta
+  encode.update({"exp": expires_delta})
+  return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
+""" END CREATE VERIFY TOKEN"""
+
+''' AUTHENTICATE USER'''
+def authenticate_user( user: UserLogin, db: Session):
+  user_db = db.query(UserModel).filter_by(usr_email = user.usr_email).first()
+
+  if not user_db:
+    raise HTTPException(
+      status_code=status.HTTP_404_NOT_FOUND,
+      detail="Usuario o contraseña incorrecto",
+    )
+  if not verify_password(user.usr_password, user_db.usr_password):
+    raise HTTPException(
+      status_code=status.HTTP_400_BAD_REQUEST,
+      detail="Usuario o contraseña incorrecto",
+    )
+  return user_db
+''' END AUTHENTICATE USER'''
+
+
+
+
+
+
+
+
+
+

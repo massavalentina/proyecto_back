@@ -8,13 +8,12 @@ from pydantic import BaseModel, Field
 
 
 class CompanyCreate(BaseModel):
-    name: str = Field(min_length=3, max_length=50)
-    web_direction: str = Field(regex='^((www.)?[a-z0-9]+\.[a-z]+(\/[a-zA-Z0-9#]+\/?))*$')
-    web_direction2: str = Field(regex= '^(www\.)*[A-Za-z0-9_-]+\.[A-Za-z]{2,}$')
+  name: str = Field(min_length=3, max_length=50)
+  web_direction: str = Field(regex='^((www.)?[a-z0-9]+\.[a-z]+(\/[a-zA-Z0-9#]+\/?))*$')
 
 
 class Company(CompanyCreate):
-    id: int
+  id: int
 
-    class Config:
-        orm_mode: True
+  class Config:
+      orm_mode = True
