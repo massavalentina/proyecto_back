@@ -1,7 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi_jwt_auth import AuthJWT
-from fastapi_jwt_auth.exceptions import AuthJWTException
-from fastapi.responses import Response
+from fastapi import HTTPException, status
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema
 from passlib.context import CryptContext
 from sqlalchemy import update
