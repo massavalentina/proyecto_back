@@ -27,8 +27,8 @@ async def register( user: UserCreate, db: db_dependency ):
   return 'ok'
 
 @router_auth.get('/verify_email/{token}')
-def verify( token: str, db: db_dependency):
-  verify_usr_email(token, db)
+def verify( token: str, usr_email:str, db: db_dependency):
+  verify_usr_email(token, usr_email, db)
   return 'ok'
 
 @router_auth.post('/login')

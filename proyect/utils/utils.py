@@ -1,9 +1,9 @@
 from fastapi import HTTPException, status
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema
 from passlib.context import CryptContext
-from sqlalchemy import update
+from sqlalchemy import update, delete
 from sqlalchemy.orm import Session
-from jose import JWTError, jwt
+from jose import JWTError, jwt, ExpiredSignatureError
 from config.enviroments import ALGORITHM, SECRET_KEY
 from models.user import UserModel
 from schemas.user import UserCreate, UserLogin
@@ -11,17 +11,15 @@ from datetime import datetime, timedelta
 
 
 
-#################### HASHING PASSWORD WITH BCRYPT ####################
-#     configuracion para hasheo de password                          #
-######################################################################
+#*################### HASHING PASSWORD WITH BCRYPT ####################
+#*     configuracion para hasheo de password                          #
+#*#####################################################################
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto" )
-
 def get_password_hash(password):
   return bcrypt_context.hash(password)
-
 def verify_password(plain_password, hash_password):
   return bcrypt_context.verify(plain_password, hash_password)
-######################################################################
+#*#####################################################################
     
     
 #*################### send_email ######################
@@ -39,7 +37,7 @@ async def send_email(token: str, usr_email: str):
     MAIL_FROM="pilcapa2023@gmail.com",
   )
   
-  verification_url = f"http://localhost:8000/auth/verify_email/{token}"
+  verification_url = f"http://localhost:8000/auth/verify_email/{token}?usr_email={usr_email}"
   
   template = f"""
     <html>
@@ -61,8 +59,11 @@ async def send_email(token: str, usr_email: str):
   await fm.send_message(message)
 #*#####################################################
   
+  
     
-''' CREATE USER '''
+#*################### Create an User #####################
+#*        logica de creacion de usuario                  #
+#*########################################################
 async def create_user(db: Session, user: UserCreate):
   usr_email = db.query(UserModel).filter(UserModel.usr_email == user.usr_email).first() 
 
@@ -82,19 +83,23 @@ async def create_user(db: Session, user: UserCreate):
   
   token = create_verify_token( 
     db_user.usr_id, 
-    timedelta(minutes=25)
+    timedelta(minutes=2)
   )
   
   await send_email(token, user.usr_email)
   return db_user
-''' END CREATE USER'''
+#*########################################################
     
-'''VERIFY EMAIL'''
-def verify_usr_email(token: str, db: Session):
+    
+    
+#*################### Verify user email ##################
+#*        Verificar email de usuario                     #
+#*########################################################
+def verify_usr_email(token: str, usr_email: str, db: Session):
   try:
     payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-
     usr_id = payload['id']
+    print(usr_id)
     if not usr_id:
       raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -102,6 +107,11 @@ def verify_usr_email(token: str, db: Session):
       )
       
     user_db = db.query(UserModel).filter_by(usr_id = usr_id).first()
+    
+    # TODO: preguntar a Rafa porque no se guarda asi!
+    #! user_db.usr_enabled = True
+    #! db.add(user_db)
+    #! db.commit()
     
     if not user_db:
       raise HTTPException(
@@ -113,23 +123,40 @@ def verify_usr_email(token: str, db: Session):
     db.execute(user_update)
     db.commit()
     
+  except ExpiredSignatureError:
+    user_delete = ( delete(UserModel).where(UserModel.usr_email == usr_email) )  
+    db.execute(user_delete)
+    db.commit()
+    raise HTTPException(
+      status_code=status.HTTP_406_NOT_ACCEPTABLE,
+      detail="Su registro ha expirado, por favor registrese nuevamente",
+    )
     
   except JWTError:
     raise HTTPException(
       status_code=status.HTTP_401_UNAUTHORIZED,
-      detail="Token expirado",
+      detail="Error de authenticacion",
     )
-''' END VERIFY EMAIL'''       
+#*########################################################
 
-""" CREATE VERIFY TOKEN """
+
+
+#*################### Create Verify user email ##############
+#*        creacion del token de email_verification          #
+#*###########################################################
 def create_verify_token( usr_id: int, expires_delta: timedelta):
   encode = {"id": usr_id}
   expires_delta = datetime.utcnow() + expires_delta
   encode.update({"exp": expires_delta})
   return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
-""" END CREATE VERIFY TOKEN"""
+#*###########################################################
 
-''' AUTHENTICATE USER'''
+
+
+
+#*################### AUTHENTICATE USER ######################
+#*        logica de autenticacion de usuario                  #
+#*#############################################################
 def authenticate_user( user: UserLogin, db: Session):
   user_db = db.query(UserModel).filter_by(usr_email = user.usr_email).first()
 
@@ -144,7 +171,7 @@ def authenticate_user( user: UserLogin, db: Session):
       detail="Usuario o contraseña incorrecto",
     )
   return user_db
-''' END AUTHENTICATE USER'''
+#*#############################################################
 
 
 
