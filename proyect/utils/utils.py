@@ -153,7 +153,6 @@ def create_verify_token( usr_id: int, expires_delta: timedelta):
 
 
 
-
 #*################### AUTHENTICATE USER ######################
 #*        logica de autenticacion de usuario                  #
 #*#############################################################

@@ -7,7 +7,7 @@ from sqlalchemy import Column, Integer, String
 ###########################################################################################*
 
 class CountryModel(Base):
-  __tablename__ = 'Countries'
+  __tablename__ = 'countries'
   id = Column(Integer, primary_key=True, index=True)
   name = Column(String(100))
 

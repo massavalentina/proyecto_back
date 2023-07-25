@@ -6,6 +6,9 @@ class UserLogin(BaseModel):
   
 class UserCreate(UserLogin):
   usr_name: str = Field(regex=r"^(?!.*\s)[a-zA-Z0-9_-]+(?<!-)$", min_length=3, max_length=50)
+  usr_country: int 
+  usr_language: int
+  usr_company: int
   
 class User(UserCreate):
   usr_id: int
