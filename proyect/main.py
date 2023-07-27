@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import Response
 from routes.route_company import router_company
 from routes.route_country import router_country
@@ -8,20 +8,20 @@ from fastapi.responses import JSONResponse
 from fastapi_jwt_auth.exceptions import AuthJWTException
 from fastapi_jwt_auth import AuthJWT
 from schemas.settings import Settings
+from utils.utils import verify_login
 # from routes.protected import protected_router #! ignorar
 from db import create_tables
 
 app = FastAPI()
-
+auth = AuthJWT()
 
 # app.include_router(protected_router) #! ignorar
 app.include_router(router_auth)
-app.include_router(router_company)
-app.include_router(router_language)
-app.include_router(router_country)
+app.include_router(router_company, dependencies=[Depends(verify_login(auth, "company"))])
+app.include_router(router_language, dependencies=[Depends(verify_login("pepe"))]) 
+app.include_router(router_country, dependencies=[Depends(verify_login("company"))])
 
 create_tables()
-
 
 @AuthJWT.load_config
 def get_config():
@@ -35,7 +35,9 @@ def authjwt_exception_handler(request: Request, exc: AuthJWTException):
   )
   
 @app.get('/')
-def home():
-  return 'hola'
+def home(user: str = Depends(verify_login)):
+  return user
+  
+  
 
     

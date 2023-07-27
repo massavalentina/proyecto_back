@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status
+from fastapi import Depends, HTTPException, status
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema
 from passlib.context import CryptContext
 from sqlalchemy import update, delete
@@ -8,6 +8,7 @@ from config.enviroments import ALGORITHM, SECRET_KEY
 from models.user import UserModel
 from schemas.user import UserCreate, UserLogin
 from datetime import datetime, timedelta
+from fastapi_jwt_auth import AuthJWT
 
 
 
@@ -169,11 +170,29 @@ def authenticate_user( user: UserLogin, db: Session):
       status_code=status.HTTP_400_BAD_REQUEST,
       detail="Usuario o contraseña incorrecto",
     )
+  if not user_db.usr_enabled:
+    raise HTTPException(
+      status_code=status.HTTP_400_BAD_REQUEST,
+      detail="Usuario no verificado",
+    )
   return user_db
 #*#############################################################
 
+#*################### VERIFY  USER ############################
+#* logica de verificación de usuario para acceso a endpoints #
+#*#############################################################
 
+auth_dependency = Annotated = Depends(AuthJWT)
 
+#TODO: corregir y agregar claims al token
+def verify_login(auth: AuthJWT = Depends(), valor: str): #dependencia contra el objeto AuthJWT
+  auth.jwt_required()
+  user_id = auth.get_jwt_subject()
+  respuesta = ""
+  if valor == 'company':      #recurso
+    respuesta = "viene de company"
+
+  return f'hola, {user_id}, {respuesta}'
 
 
 
