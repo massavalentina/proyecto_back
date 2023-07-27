@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Depends
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema
 from passlib.context import CryptContext
 from sqlalchemy import update, delete
@@ -8,7 +8,8 @@ from config.enviroments import ALGORITHM, SECRET_KEY
 from models.user import UserModel
 from schemas.user import UserCreate, UserLogin
 from datetime import datetime, timedelta
-
+from fastapi_jwt_auth.exceptions import AuthJWTException
+from fastapi_jwt_auth import AuthJWT
 
 
 #*################### HASHING PASSWORD WITH BCRYPT ####################
@@ -169,12 +170,29 @@ def authenticate_user( user: UserLogin, db: Session):
       status_code=status.HTTP_400_BAD_REQUEST,
       detail="Usuario o contraseña incorrecto",
     )
+  if not user_db.usr_enabled:
+    raise HTTPException(
+      status_code=status.HTTP_404_NOT_FOUND,
+      detail="Usuario no validado",
+    )
   return user_db
 #*#############################################################
 
 
+#*################### VERIFY USER #############################
+#*        logica de verificacion de usuario                   #
+#?                  Ver User Claims                           #
+#*#############################################################
 
+def verify_login(auth: AuthJWT , valor: str ): #dependencia contra el objeto AuthJWT
+  auth.jwt_required()
+  user_id = auth.get_jwt_subject()
+  response = " "
+  if valor == 'company':
+    response = "from company"
+  return f'hola, {user_id} {response}'
 
+#*#############################################################
 
 
 
